@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dasher — Vanilla JS Example</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: monospace; background: #f5f5f5; }
+    #controls { padding: 12px; display: flex; gap: 12px; align-items: start; }
+    #controls label { font-size: 13px; }
+    #controls select, #controls textarea { font-family: monospace; font-size: 13px; }
+    textarea { width: 400px; height: 80px; resize: vertical; }
+    #canvas-container { width: 100vw; height: calc(100vh - 140px); }
+    canvas { display: block; }
+    #output { position: fixed; bottom: 0; left: 0; right: 0; padding: 8px 12px;
+              background: white; border-top: 2px solid black; font-size: 14px;
+              min-height: 32px; white-space: pre-wrap; }
+  </style>
+</head>
+<body>
+  <div id="controls">
+    <div>
+      <label>Mode:</label><br>
+      <select id="mode-select">
+        <option value="character">Character (PPM)</option>
+        <option value="word">Word (Ngram)</option>
+      </select>
+    </div>
+    <div>
+      <label>Training text:</label><br>
+      <textarea id="training-text">it was the best of times it was the worst of times it was the age of wisdom it was the age of foolishness it was the epoch of belief it was the epoch of incredulity it was the season of light it was the season of darkness it was the spring of hope it was the winter of despair</textarea>
+    </div>
+    <div>
+      <button id="load-btn" style="padding: 6px 12px; font-family: monospace; cursor: pointer;">Load</button>
+    </div>
+  </div>
+
+  <div id="canvas-container">
+    <canvas id="dasher-canvas"></canvas>
+  </div>
+  <div id="output">Click the canvas to start, then move your mouse to write.</div>
+
+  <script type="module">
+    import { DasherModel } from '../../src/core/DasherModel.js';
+    import { DasherView } from '../../src/core/DasherView.js';
+    import { render as renderCanvas } from '../../src/core/DasherRenderer.js';
+    import { createPPMModel, ALPHABETS } from '../../src/models/PPMLanguageModel.js';
+    import { NgramLanguageModel } from '../../src/models/NgramLanguageModel.js';
+    import { buildNgramIndex } from '../../src/models/localNgrams.js';
+
+    const canvas = document.getElementById('dasher-canvas');
+    const container = document.getElementById('canvas-container');
+    const outputEl = document.getElementById('output');
+    const modeSelect = document.getElementById('mode-select');
+    const textArea = document.getElementById('training-text');
+    const loadBtn = document.getElementById('load-btn');
+    const ctx = canvas.getContext('2d');
+
+    let model = null;
+    let view = null;
+    let isPaused = true;
+    let isRunning = false;
+    const mouse = { x: 0, y: 0, active: false };
+
+    const settings = {
+      mode: 'character',
+      zoomSpeed: 12,
+      minNodeSize: 2,
+      expansionThreshold: 40,
+      opacityDecay: 0.8,
+    };
+
+    function resize() {
+      const rect = container.getBoundingClientRect();
+      canvas.width = Math.floor(rect.width);
+      canvas.height = Math.floor(rect.height);
+      if (view) view.resize(canvas.width, canvas.height);
+    }
+
+    function buildModel() {
+      const text = textArea.value.trim();
+      if (!text) return;
+
+      const mode = modeSelect.value;
+      settings.mode = mode;
+
+      model = new DasherModel();
+
+      if (mode === 'character') {
+        const ppm = createPPMModel(ALPHABETS.LOWERCASE, { maxOrder: 5 });
+        ppm.train(text.toLowerCase());
+        model.setLanguageModel(ppm);
+        model.setTopK(null);
+        model.sortAlphabetical = true;
+      } else {
+        const index = buildNgramIndex(text, 2);
+        const lm = new NgramLanguageModel(index, { maxContextSize: 2, temperature: 1.5 });
+        model.setLanguageModel(lm);
+        model.setTopK(10);
+      }
+
+      model.onTextChange = (text) => {
+        outputEl.textContent = text || 'Move mouse to write...';
+      };
+
+      model.init();
+      isPaused = true;
+      outputEl.textContent = 'Click the canvas to start, then move your mouse to write.';
+    }
+
+    function animate(timestamp) {
+      if (model && view) {
+        if (mouse.active && isRunning && !isPaused) {
+          const { x: dx, y: dy } = view.screen2Dasher(mouse.x, mouse.y);
+          model.scheduleOneStep(dx, dy, settings.zoomSpeed);
+
+          while (view.isSpaceAroundNode(model.rootmin, model.rootmax)) {
+            if (!model.reparentRoot()) break;
+          }
+
+          if (model.root.onlyChildRendered) {
+            const child = model.root.onlyChildRendered;
+            const bounds = model.getNodeDasherBounds(child, model.rootmin, model.rootmax);
+            if (model.coversCrosshair(bounds.y1, bounds.y2)) {
+              model.makeRoot(child);
+            }
+          }
+
+          model.updateOutput();
+        }
+
+        renderCanvas(ctx, model, view, { width: canvas.width, height: canvas.height }, settings, mouse, isPaused);
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    // Event listeners
+    canvas.addEventListener('click', () => {
+      if (isPaused && model) {
+        isPaused = false;
+        isRunning = true;
+      }
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      mouse.x = e.clientX - rect.left;
+      mouse.y = e.clientY - rect.top;
+      mouse.active = true;
+      if (model && !isPaused && !isRunning) isRunning = true;
+    });
+
+    canvas.addEventListener('mouseenter', () => {
+      mouse.active = true;
+      if (model && !isPaused) isRunning = true;
+    });
+
+    canvas.addEventListener('mouseleave', () => {
+      mouse.active = false;
+      isRunning = false;
+    });
+
+    loadBtn.addEventListener('click', () => {
+      buildModel();
+    });
+
+    window.addEventListener('resize', resize);
+
+    // Initialize
+    resize();
+    view = new DasherView(canvas.width, canvas.height);
+    buildModel();
+    requestAnimationFrame(animate);
+  </script>
+</body>
+</html>
