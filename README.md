@@ -172,4 +172,4 @@ src/
 
 ## License
 
-GPL-2.0 (consistent with the original Dasher project)
+MIT
