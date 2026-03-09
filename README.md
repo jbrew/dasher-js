@@ -24,31 +24,25 @@ Paste text, pick a mode (character or word), and click Load. Click the canvas to
 
 ### React
 
+```bash
+cd examples/react
+npm install
+npm run dev
+# open http://localhost:5173/
+```
+
+See `examples/react/App.jsx` for the full source. The key API:
+
 ```jsx
 import { DasherCanvas, useDasher } from 'dasher/react';
-import { createPPMModel, ALPHABETS } from 'dasher/models';
 
-const ppm = createPPMModel(ALPHABETS.LOWERCASE, { maxOrder: 5 });
-ppm.train("your training text here");
+const { modelRef, viewRef, modelReady, outputText } = useDasher({
+  languageModel: ppm,
+  mode: "character",
+});
 
-function App() {
-  const { modelRef, viewRef, modelReady, outputText } = useDasher({
-    languageModel: ppm,
-    mode: "character",
-  });
-
-  return (
-    <div style={{ width: "100vw", height: "100vh" }}>
-      <DasherCanvas
-        modelRef={modelRef}
-        viewRef={viewRef}
-        modelReady={modelReady}
-        settings={{ mode: "character" }}
-      />
-      <p>{outputText}</p>
-    </div>
-  );
-}
+<DasherCanvas modelRef={modelRef} viewRef={viewRef}
+  modelReady={modelReady} settings={{ mode: "character" }} />
 ```
 
 ### Programmatic (no UI)

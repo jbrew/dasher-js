@@ -1,14 +1,6 @@
-/**
- * React example: Dasher with PPM and Ngram models
- *
- * To run: set up a Vite project that resolves 'dasher' to ../../src/index.js
- */
-
 import { useState, useMemo } from "react";
-import { DasherCanvas, useDasher } from "../../src/react/index.js";
-import { createPPMModel, ALPHABETS } from "../../src/models/PPMLanguageModel.js";
-import { NgramLanguageModel } from "../../src/models/NgramLanguageModel.js";
-import { buildNgramIndex } from "../../src/models/localNgrams.js";
+import { DasherCanvas, useDasher } from "dasher/react";
+import { createPPMModel, ALPHABETS, NgramLanguageModel, buildNgramIndex } from "dasher";
 
 const DEFAULT_TEXT = `it was the best of times it was the worst of times it was the age of wisdom it was the age of foolishness it was the epoch of belief it was the epoch of incredulity it was the season of light it was the season of darkness it was the spring of hope it was the winter of despair`;
 
@@ -41,7 +33,20 @@ export default function App() {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh", fontFamily: "monospace" }}>
-      <div style={{ padding: 12, display: "flex", gap: 12, alignItems: "start", borderBottom: "2px solid black" }}>
+      <div style={{ padding: "8px 12px", borderBottom: "2px solid black", background: "white", minHeight: 32, fontSize: 14, whiteSpace: "pre-wrap" }}>
+        {outputText || "Click the canvas to start, then move your mouse to write."}
+      </div>
+
+      <div style={{ flex: 1 }}>
+        <DasherCanvas
+          modelRef={modelRef}
+          viewRef={viewRef}
+          modelReady={modelReady}
+          settings={{ mode, zoomSpeed: 12 }}
+        />
+      </div>
+
+      <div style={{ padding: 12, display: "flex", gap: 12, alignItems: "start", borderTop: "1px solid #ccc", background: "#f5f5f5" }}>
         <div>
           <label style={{ fontSize: 13 }}>Mode:</label><br />
           <select value={mode} onChange={(e) => setMode(e.target.value)} style={{ fontFamily: "monospace" }}>
@@ -63,19 +68,6 @@ export default function App() {
         >
           Load
         </button>
-      </div>
-
-      <div style={{ flex: 1 }}>
-        <DasherCanvas
-          modelRef={modelRef}
-          viewRef={viewRef}
-          modelReady={modelReady}
-          settings={{ mode, zoomSpeed: 12 }}
-        />
-      </div>
-
-      <div style={{ padding: "8px 12px", borderTop: "2px solid black", background: "white", minHeight: 32, fontSize: 14, whiteSpace: "pre-wrap" }}>
-        {outputText || "Click the canvas to start, then move your mouse to write."}
       </div>
     </div>
   );
