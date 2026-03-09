@@ -11,14 +11,25 @@
     #controls label { font-size: 13px; }
     #controls select, #controls textarea { font-family: monospace; font-size: 13px; }
     textarea { width: 400px; height: 80px; resize: vertical; }
+    #output { padding: 8px 12px; background: white; border-bottom: 2px solid black;
+              font-size: 14px; min-height: 32px; white-space: pre-wrap; }
     #canvas-container { width: 100vw; height: calc(100vh - 140px); }
     canvas { display: block; }
-    #output { position: fixed; bottom: 0; left: 0; right: 0; padding: 8px 12px;
-              background: white; border-top: 2px solid black; font-size: 14px;
-              min-height: 32px; white-space: pre-wrap; }
+    #controls { position: fixed; bottom: 0; left: 0; right: 0; padding: 12px;
+                display: flex; gap: 12px; align-items: start; background: #f5f5f5;
+                border-top: 1px solid #ccc; }
+    #controls label { font-size: 13px; }
+    #controls select, #controls textarea { font-family: monospace; font-size: 13px; }
+    textarea { width: 400px; height: 80px; resize: vertical; }
   </style>
 </head>
 <body>
+  <div id="output">Click the canvas to start, then move your mouse to write.</div>
+
+  <div id="canvas-container">
+    <canvas id="dasher-canvas"></canvas>
+  </div>
+
   <div id="controls">
     <div>
       <label>Mode:</label><br>
@@ -35,11 +46,6 @@
       <button id="load-btn" style="padding: 6px 12px; font-family: monospace; cursor: pointer;">Load</button>
     </div>
   </div>
-
-  <div id="canvas-container">
-    <canvas id="dasher-canvas"></canvas>
-  </div>
-  <div id="output">Click the canvas to start, then move your mouse to write.</div>
 
   <script type="module">
     import { DasherModel } from '../../src/core/DasherModel.js';
