@@ -10,7 +10,15 @@ This is a JavaScript reimplementation supporting both character-level and word-l
 
 ### Vanilla JS
 
-Open `examples/vanilla/index.html` in a browser. Paste text, pick a mode, and click Load.
+Serve the repo root and open the example in your browser:
+
+```bash
+cd dasher
+python3 -m http.server 8000
+# open http://localhost:8000/examples/vanilla/
+```
+
+Paste text, pick a mode (character or word), and click Load. Click the canvas to start, then move your mouse to write.
 
 ### React
 
