@@ -1,5 +1,5 @@
 {
-  "name": "dasher",
+  "name": "dasher-js",
   "version": "0.1.0",
   "description": "Dasher text entry interface — zooming predictive text via arithmetic coding",
   "type": "module",
@@ -34,7 +34,7 @@
     "ppm",
     "ngram"
   ],
-  "license": "GPL-2.0",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/jbrew/dasher-js"
