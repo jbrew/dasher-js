@@ -6,6 +6,8 @@ Dasher was created by the [Inference Group](https://www.inference.org.uk/is/) at
 
 This is a JavaScript reimplementation supporting both character-level and word-level entry with pluggable language models.
 
+**[Live demo](https://frigital.onrender.com/tools/dasher/)**
+
 ## Quick Start
 
 ### Vanilla JS
