@@ -526,7 +526,7 @@ export class DasherModel {
       const node = currentPath[i];
       if (node.token) {
         this.outputTokens.push(node.token);
-        this.outputItems.push({ token: node.token });
+        this.outputItems.push({ token: node.token, image: node.image });
       }
     }
 

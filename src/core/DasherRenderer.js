@@ -30,7 +30,7 @@ export function getWordColor(colorIndex) {
  * @param crosshairX - Crosshair X position in screen coordinates
  * @param decayFactor - Controls fade rate (0-1, higher = slower fade)
  */
-function getScreenSpaceOpacity(screenX, crosshairX, decayFactor) {
+export function getScreenSpaceOpacity(screenX, crosshairX, decayFactor) {
   const distancePastCrosshair = crosshairX - screenX;
 
   if (distancePastCrosshair <= 0) {
@@ -88,14 +88,14 @@ export function render(ctx, model, view, dimensions, settings, mouse, isPaused) 
   renderCrosshair(ctx, view, height, width);
 
   if (mouse && mouse.active && !isPaused) {
-    renderCursor(ctx, mouse);
+    renderCursor(ctx, mouse, crosshairScreen);
   }
 }
 
 /**
  * Draw the crosshair at the origin point
  */
-function renderCrosshair(ctx, view, height, width) {
+export function renderCrosshair(ctx, view, height, width) {
   ctx.strokeStyle = "#333";
   ctx.lineWidth = 2;
 
@@ -118,12 +118,21 @@ function renderCrosshair(ctx, view, height, width) {
 }
 
 /**
- * Draw the mouse cursor indicator
+ * Draw a dotted line from the crosshair to the mouse cursor, with a dot at the cursor
  */
-function renderCursor(ctx, mouse) {
+export function renderCursor(ctx, mouse, crosshairScreen) {
+  ctx.strokeStyle = "#ff6600";
+  ctx.setLineDash([5, 5]);
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(crosshairScreen.x, crosshairScreen.y);
+  ctx.lineTo(mouse.x, mouse.y);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
   ctx.fillStyle = "#ff6600";
   ctx.beginPath();
-  ctx.arc(mouse.x, mouse.y, 10, 0, Math.PI * 2);
+  ctx.arc(mouse.x, mouse.y, 6, 0, Math.PI * 2);
   ctx.fill();
 }
 
@@ -137,17 +146,17 @@ export function renderCharNode(ctx, item, view, opacity = 1) {
   if (height < 1) return;
 
   ctx.globalAlpha = opacity;
-
   const color = getNodeColor(node.color || 0);
-
   ctx.fillStyle = color;
   ctx.fillRect(screenX, screenY1, screenWidth, height);
 
+  ctx.globalAlpha = 1;
   ctx.strokeStyle = coversCrosshair ? "#000" : "#999";
   ctx.lineWidth = coversCrosshair ? 2 : 1;
   ctx.strokeRect(screenX, screenY1, screenWidth, height);
 
   if (height > 20 && node.token) {
+    ctx.globalAlpha = opacity;
     ctx.fillStyle = "#000";
     ctx.font = `${Math.min(height * 0.7, 24)}px sans-serif`;
     ctx.textAlign = "left";
@@ -175,17 +184,16 @@ export function renderWordNode(ctx, item, view, settings = {}, opacity = 1) {
   if (height < 1) return;
 
   ctx.globalAlpha = opacity;
-
   const color = getWordColor(node.color || 0);
-
   ctx.fillStyle = color;
   ctx.fillRect(screenX, screenY1, screenWidth, height);
 
+  ctx.globalAlpha = 1;
   ctx.strokeStyle = coversCrosshair ? "#000" : "#999";
   ctx.lineWidth = coversCrosshair ? 2 : 1;
   ctx.strokeRect(screenX, screenY1, screenWidth, height);
 
-  // Render text
+  ctx.globalAlpha = opacity;
   const text = node.token || "";
 
   if (height > 15 && text) {
